@@ -12,6 +12,8 @@ Execution model (conservative, no look-ahead):
     live sizing code estimates them.
   * Stops are checked intrabar: if a bar's low reaches the stop, the exit
     fills at min(bar open, stop) (gaps through the stop are honored), minus costs.
+  * Each signal sees the same window as the live bot: the last
+    `data.candle_fetch_limit` closed candles.
   * Daily-loss/drawdown halts are NOT simulated; position sizing is.
 """
 
@@ -140,7 +142,8 @@ def run_backtest(cfg: Config, candles: list[Candle], rules: SymbolRules, *, data
             break
         ctx = PositionContext(pos is not None, pos.entry_px if pos else None,
                               pos.stop if pos else None, pos.highest if pos else None)
-        sig = evaluate(candles[: t + 1], ctx, s)
+        # Same window the live bot sees: the last data.candle_fetch_limit closed candles.
+        sig = evaluate(candles[max(0, t + 1 - cfg.data.candle_fetch_limit): t + 1], ctx, s)
         if pos is not None:
             pos.stop = max(pos.stop, sig.stop_price or pos.stop)
             pos.highest = max(pos.highest, sig.highest_close or pos.highest)
