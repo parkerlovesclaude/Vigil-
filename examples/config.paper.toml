@@ -1,0 +1,62 @@
+# vigil example configuration: PAPER mode (default, safe).
+# Every setting is listed explicitly. Unknown keys are rejected.
+# Validate with:  python -m vigil check-config examples/config.paper.toml
+
+[run]
+mode = "paper"                 # paper | testnet | live
+symbol = "BTCUSDT"
+interval = "1h"                # 15m | 30m | 1h | 4h | 1d
+state_dir = "./var/paper"      # state.json, audit.jsonl, paper_account.json, lock file
+bar_close_delay_seconds = 5    # wait after a bar closes before evaluating it
+loop_sleep_seconds = 5         # loop period (stop checks run every loop)
+
+[strategy]
+entry_lookback = 20            # enter on close above the highest high of the previous 20 bars
+exit_lookback = 10             # exit on close below the lowest low of the previous 10 bars
+trend_ema_period = 100         # only enter when close > EMA(100)
+atr_period = 14
+stop_atr_mult = "2.0"          # initial stop = entry close - 2 x ATR
+trail_atr_mult = "3.0"         # trailing stop = highest close since entry - 3 x ATR
+
+[costs]
+taker_fee_bps = "10"           # 0.10% per side; set to YOUR fee tier
+extra_slippage_bps = "2"       # margin for slippage the visible book doesn't show
+max_spread_bps = "15"          # skip entries when the spread is wider than this
+limit_price_buffer_bps = "25"  # IOC limit = best price +/- 0.25% (worst acceptable fill)
+max_cost_to_risk = "0.25"      # skip if round-trip costs exceed 0.25R (25% of stop distance)
+
+[risk]
+risk_per_trade_fraction = "0.005"  # lose at most 0.5% of equity if the stop is hit (worst case)
+max_position_notional = "1000"     # hard cap per position, in quote currency
+max_position_fraction = "0.25"     # and at most 25% of equity
+max_daily_loss = "50"              # block new entries for the UTC day after this loss (quote)
+max_drawdown_fraction = "0.10"     # halt (manual reset) at 10% below peak equity
+max_orders_per_day = 6
+max_consecutive_errors = 3         # halt after 3 failed loops/orders in a row
+cooldown_bars_after_exit = 1
+max_invalid_data_seconds_in_position = 900  # halt if no valid data for 15 min while holding
+position_tolerance_fraction = "0.001"       # reconciliation tolerance on base balance
+
+[data]
+max_bar_lag_seconds = 120      # entries only within this long after a bar closes
+max_book_age_seconds = 5
+max_book_vs_close_bps = "300"  # book mid vs last close disagreement => data conflict
+max_clock_skew_ms = 1000
+book_depth_levels = 20
+candle_fetch_limit = 400       # must cover strategy warm-up (3 x EMA period)
+
+[exchange]
+name = "paper"                 # paper = simulated fills on live public Binance data
+base_url = ""                  # "" = default for the mode. US users: see docs/OPERATIONS.md
+request_timeout_seconds = 10
+recv_window_ms = 5000
+order_poll_seconds = "1"
+order_resolve_timeout_seconds = 60
+api_key_env = "VIGIL_API_KEY"      # credentials are read from the environment, never from this file
+api_secret_env = "VIGIL_API_SECRET"
+
+[paper]
+starting_quote = "10000"
+
+[live]
+enabled = false
