@@ -30,6 +30,9 @@ class ConfigError(Exception):
         self.errors = errors
         super().__init__("invalid configuration:\n  - " + "\n  - ".join(errors))
 
+    def __reduce__(self):  # keep the error list intact across process boundaries
+        return (ConfigError, (self.errors,))
+
 
 @dataclass(frozen=True)
 class RunConfig:
